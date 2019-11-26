@@ -2,6 +2,12 @@ name: $(Date:yyyyMMdd)$(Rev:r)
 
 trigger:
 - master
+- dev
+
+variables:
+  TestUsername: testuser
+  TestSubscription: testsubscription
+  TestWebSpace: testwebspace
 
 jobs:
 - job: "RunLatestMeshTests"
@@ -14,7 +20,44 @@ jobs:
         sshPublicKey: $(sshPublicKey)
         sshPassphrase: $(sshPassphrase)
         sshKeySecureFile: id_rsa
-    - bash: | 
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+    - script: |
+        python -m pip install requests
+      displayName: Install Python Prerequisites 
+    - task: PythonScript@0
+      displayName: Add Or Update Hosting Configuration
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/add_or_update_hosting_config.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+    - task: PythonScript@0
+      displayName: Create User
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_user.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --publishing-username $(TestUsername) --publishing-password $(PublishingPassword) --name $(TestUsername)
+    - task: PythonScript@0
+      displayName: Create Subscription
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_subscription.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --user $(TestUsername) --name $(TestSubscription)
+    - task: PythonScript@0
+      displayName: Create WebSpace
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_webspace.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --name $(TestWebSpace)
+    - task: PythonScript@0
+      displayName: Create Function Sites
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_function_sites.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace) --storage-account $(AzureWebJobsStorage)
+    - bash: |
         git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker.git
         git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker-private.git
         git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-devops-cli-test.git
@@ -39,26 +82,19 @@ jobs:
         command: push
         repository: maheeri/python37-test-2.0
         tags: |
-          $(Build.BuildNumber)
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-        addToPath: true
-    - script: |
-        python -m pip install requests
-      displayName: Install Python Prerequisites           
+          $(Build.BuildNumber)          
     - task: PythonScript@0
       displayName: Remove Previous Mesh Image
       inputs:
         scriptSource: filePath 
-        scriptPath: remove_mesh_image.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --username $(ProxyUsername) --password $(ProxyPassword)
+        scriptPath: proxy_operations/remove_mesh_image.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
     - task: PythonScript@0
       displayName: Update Mesh Image
       inputs:
         scriptSource: filePath 
-        scriptPath: update_mesh_image.py
-        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --username $(ProxyUsername) --password $(ProxyPassword)
+        scriptPath: proxy_operations/update_mesh_image.py
+        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
     - task: PythonScript@0
       displayName: Wait For Image Update
       inputs:

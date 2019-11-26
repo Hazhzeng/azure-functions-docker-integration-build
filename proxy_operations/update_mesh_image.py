@@ -11,8 +11,8 @@ def parse_args():
         description='Mesh Image Update')
     parser.add_argument('--image-name', dest='image_name')
     parser.add_argument('--proxy-address', dest='proxy_address')
-    parser.add_argument('--username', dest='username')
-    parser.add_argument('--password', dest='password')
+    parser.add_argument('--proxy_username', dest='proxy_username')
+    parser.add_argument('--proxy_password', dest='proxy_password')
     return parser.parse_args()
 
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     update_address = '/'.join([args.proxy_address, UPDATE_ENDPOINT])
     update_response = requests.post(url=update_address, json=update_data,
-                                    auth=(args.username, args.password))
+                                    auth=(args.proxy_username, args.proxy_password))
 
     # Sleep to allow changes to propagate
     time.sleep(10)
@@ -44,4 +44,4 @@ if __name__ == '__main__':
 
     add_address = '/'.join([args.proxy_address, ADD_ENDPOINT])
     requests.post(url=add_address, json=add_data,
-                  auth=(args.username, args.password))
+                  auth=(args.proxy_username, args.proxy_password))

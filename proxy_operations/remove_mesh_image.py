@@ -9,8 +9,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Remove Mesh Image')
     parser.add_argument('--proxy-address', dest='proxy_address')
-    parser.add_argument('--username', dest='username')
-    parser.add_argument('--password', dest='password')
+    parser.add_argument('--proxy_username', dest='proxy_username')
+    parser.add_argument('--proxy_password', dest='proxy_password')
     return parser.parse_args()
 
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     list_address = '/'.join([args.proxy_address, LIST_ENDPOINT])
     list_response = requests.get(url=list_address,
-                                 auth=(args.username, args.password))
+                                 auth=(args.proxy_username, args.proxy_password))
     image_list = list_response.json()['value']['listOfImages']
 
     remove_address = '/'.join([args.proxy_address, REMOVE_ENDPOINT])
@@ -28,4 +28,4 @@ if __name__ == '__main__':
             'image': image_name
         }
         requests.delete(url=remove_address, json=delete_data,
-                        auth=(args.username, args.password))
+                        auth=(args.proxy_username, args.proxy_password))
