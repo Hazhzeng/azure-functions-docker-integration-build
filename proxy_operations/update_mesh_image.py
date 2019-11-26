@@ -11,8 +11,9 @@ def parse_args():
         description='Mesh Image Update')
     parser.add_argument('--image-name', dest='image_name')
     parser.add_argument('--proxy-address', dest='proxy_address')
-    parser.add_argument('--proxy_username', dest='proxy_username')
-    parser.add_argument('--proxy_password', dest='proxy_password')
+    parser.add_argument('--proxy-username', dest='proxy_username')
+    parser.add_argument('--proxy-password', dest='proxy_password')
+    parser.add_argument('--placeholder-id', dest='placeholder_id')
     return parser.parse_args()
 
 
@@ -27,7 +28,7 @@ if __name__ == '__main__':
         'cpuLimit': 1.0,
         'memoryLimit': 1.75,
         'bufferRatio': 0.2,
-        'placeholderId': 'v=1,k=f,e=~2,a=0',
+        'placeholderId': args.placeholder_id,
         'tagSpecific': False
     }
 

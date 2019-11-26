@@ -9,8 +9,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Remove Mesh Image')
     parser.add_argument('--proxy-address', dest='proxy_address')
-    parser.add_argument('--proxy_username', dest='proxy_username')
-    parser.add_argument('--proxy_password', dest='proxy_password')
+    parser.add_argument('--proxy-username', dest='proxy_username')
+    parser.add_argument('--proxy-password', dest='proxy_password')
     return parser.parse_args()
 
 

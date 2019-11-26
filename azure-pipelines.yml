@@ -10,16 +10,10 @@ variables:
   TestWebSpace: testwebspace
 
 jobs:
-- job: "RunLatestMeshTests"
+- job: "SetupStampAndDeployTestApps"
   pool:
       vmImage: 'ubuntu-16.04'
   steps:
-    - task: InstallSSHKey@0
-      inputs:
-        knownHostsEntry: $(knownHostsEntry)
-        sshPublicKey: $(sshPublicKey)
-        sshPassphrase: $(sshPassphrase)
-        sshKeySecureFile: id_rsa
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.7'
@@ -51,16 +45,102 @@ jobs:
         scriptSource: filePath 
         scriptPath: proxy_operations/create_webspace.py
         arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --name $(TestWebSpace)
+    - bash: |
+        git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git
+      displayName: Clone Required Repos
     - task: PythonScript@0
       displayName: Create Function Sites
       inputs:
         scriptSource: filePath 
         scriptPath: proxy_operations/create_function_sites.py
         arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace) --storage-account $(AzureWebJobsStorage)
+    - task: PythonScript@0
+      displayName: Zip Function Apps For Deployment
+      inputs:
+        scriptSource: filePath 
+        scriptPath: zip_function_apps.py
+    - task: PythonScript@0
+      displayName: Zip Deploy Function Apps
+      inputs:
+        scriptSource: filePath 
+        scriptPath: zip_deploy_apps.py
+        arguments: --site-username $(TestUsername) --site-password $(PublishingPassword) --zipdeploy-address $(ZipDeployAddress)
+
+- job: "BuildAndUpdateV2Python36Image"
+  pool:
+      vmImage: 'ubuntu-16.04'
+  steps:
+    - task: InstallSSHKey@0
+      inputs:
+        knownHostsEntry: $(knownHostsEntry)
+        sshPublicKey: $(sshPublicKey)
+        sshPassphrase: $(sshPassphrase)
+        sshKeySecureFile: id_rsa
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+    - script: |
+        python -m pip install requests
+      displayName: Install Python Prerequisites 
     - bash: |
         git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker.git
         git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker-private.git
-        git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-devops-cli-test.git
+      displayName: Clone Required Repos
+    - bash: |
+        docker build -t local/azure-functions-base:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
+        docker build -t local/azure-functions-python-deps:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36-deps.Dockerfile azure-functions-docker/host
+        docker build -t local/azure-functions-python:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:python36-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:python36-test-2.0" azure-functions-docker/host
+        docker build -t local/azure-functions-mesh:python36-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:python36-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host 
+        docker tag local/azure-functions-mesh:python36-test-2.0 maheeri/python36-test-2.0:$TAGNUMBER
+      env:
+        TAGNUMBER: $(Build.BuildNumber)
+      displayName: Build Docker Image
+    - task: Docker@2
+      displayName: Login to Docker Hub
+      inputs:
+        command: login
+        containerRegistry: myDockerHub
+    - task: Docker@2
+      displayName: Push to Docker Hub
+      inputs:
+        command: push
+        repository: maheeri/python36-test-2.0
+        tags: |
+          $(Build.BuildNumber)          
+    - task: PythonScript@0
+      displayName: Remove Previous Mesh Image
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/remove_mesh_image.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+    - task: PythonScript@0
+      displayName: Update Mesh Image
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/update_mesh_image.py
+        arguments: --image-name maheeri/python36-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0"
+
+- job: "BuildAndUpdateV2Python37Image"
+  pool:
+      vmImage: 'ubuntu-16.04'
+  steps:
+    - task: InstallSSHKey@0
+      inputs:
+        knownHostsEntry: $(knownHostsEntry)
+        sshPublicKey: $(sshPublicKey)
+        sshPassphrase: $(sshPassphrase)
+        sshKeySecureFile: id_rsa
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+    - script: |
+        python -m pip install requests
+      displayName: Install Python Prerequisites 
+    - bash: |
+        git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker.git
+        git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker-private.git
       displayName: Clone Required Repos
     - bash: |
         docker build -t local/azure-functions-base:python37-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
@@ -94,7 +174,16 @@ jobs:
       inputs:
         scriptSource: filePath 
         scriptPath: proxy_operations/update_mesh_image.py
-        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0,r=python,rv=3.7"
+    
+- job: "RunTests"
+  dependsOn: ['SetupStampAndDeployTestApps',
+              'BuildAndUpdateV2Python36Image',
+              'BuildAndUpdateV2Python37Image'
+             ]
+  pool:
+      vmImage: 'ubuntu-16.04'
+  steps:
     - task: PythonScript@0
       displayName: Wait For Image Update
       inputs:
