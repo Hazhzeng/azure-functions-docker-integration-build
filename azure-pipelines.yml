@@ -203,7 +203,7 @@ jobs:
 - job: "RunTests"
   dependsOn: ['SetupStampAndDeployTestApps']
   pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-18.04'
   steps:
     - bash: |
         git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git

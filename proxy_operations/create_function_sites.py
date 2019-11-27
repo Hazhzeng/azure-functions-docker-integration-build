@@ -9,6 +9,17 @@ V2_LANGUAGES = {
     'dotnet': ['2']
 }
 
+V2_LINUXFX_VERSION = {
+    'python': {
+        '36': 'PYTHON|3.6',
+        '37': 'PYTHON|3.7'
+    },
+    'node': {
+        '8': 'NODE|8.0',
+        '10': 'NODE|10.2'
+    }
+}
+
 RUNTIMES_TEST_MATRIX = {
     'v2': V2_LANGUAGES
 }
@@ -24,6 +35,12 @@ def parse_args():
     parser.add_argument('--webspace', dest='webspace')
     parser.add_argument('--storage-account', dest='storage_account')
     return parser.parse_args()
+
+
+def append_v2_linuxfx_version(create_data, language, version):
+    # Apply linuxFxVersion to
+    if V2_LINUXFX_VERSION.get(language, {}).get(version):
+        create_data['linuxFxVersion'] = V2_LINUXFX_VERSION[language][version]
 
 
 if __name__ == '__main__':
@@ -52,9 +69,9 @@ if __name__ == '__main__':
                     'webSpaceName': args.webspace,
                     'name': app_name,
                     'isLinux': True,
-                    'linuxFxVersion': f'{language.upper()}|{version}',
                     'appSettings': app_settings_joined
                 }
+                append_v2_linuxfx_version(create_data, language, version)
 
                 create_response = requests.post(url=create_address,
                                                 json=create_data,
