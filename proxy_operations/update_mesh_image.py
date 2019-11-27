@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument('--proxy-username', dest='proxy_username')
     parser.add_argument('--proxy-password', dest='proxy_password')
     parser.add_argument('--placeholder-id', dest='placeholder_id')
+    parser.add_argument('--hostname-type', dest='hostname_type')
     return parser.parse_args()
 
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
 
     update_data = {
         'image': args.image_name,
-        'hostNameType': 'Standard',
+        'hostNameType': args.hostname_type,
         'numberMinimumContainers': 3,
         'maxContainersLimit': 9,
         'cpuLimit': 1.0,

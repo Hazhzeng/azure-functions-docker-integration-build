@@ -10,7 +10,32 @@ variables:
   TestWebSpace: testwebspace
 
 jobs:
+- job: "CleanupStampAndSetupKuduLite"
+  pool:
+        vmImage: 'ubuntu-16.04'
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+    - script: |
+        python -m pip install requests
+      displayName: Install Python Prerequisites 
+    - task: PythonScript@0
+      displayName: Remove Previous Mesh Images
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/remove_mesh_images.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+    - task: PythonScript@0
+      displayName: Add KuduLite Image
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/update_mesh_image.py
+        arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
+
 - job: "SetupStampAndDeployTestApps"
+  dependsOn: "CleanupStampAndSetupKuduLite"
   pool:
       vmImage: 'ubuntu-16.04'
   steps:
@@ -67,6 +92,7 @@ jobs:
         arguments: --site-username $(TestUsername) --site-password $(PublishingPassword) --zipdeploy-address $(ZipDeployAddress)
 
 - job: "BuildAndUpdateV2Python36Image"
+  dependsOn: "CleanupStampAndSetupKuduLite"
   pool:
       vmImage: 'ubuntu-16.04'
   steps:
@@ -107,21 +133,16 @@ jobs:
         command: push
         repository: maheeri/python36-test-2.0
         tags: |
-          $(Build.BuildNumber)          
-    - task: PythonScript@0
-      displayName: Remove Previous Mesh Image
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/remove_mesh_image.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+          $(Build.BuildNumber)
     - task: PythonScript@0
       displayName: Update Mesh Image
       inputs:
         scriptSource: filePath 
         scriptPath: proxy_operations/update_mesh_image.py
-        arguments: --image-name maheeri/python36-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0"
+        arguments: --image-name maheeri/python36-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Standard
 
 - job: "BuildAndUpdateV2Python37Image"
+  dependsOn: "CleanupStampAndSetupKuduLite"
   pool:
       vmImage: 'ubuntu-16.04'
   steps:
@@ -162,19 +183,13 @@ jobs:
         command: push
         repository: maheeri/python37-test-2.0
         tags: |
-          $(Build.BuildNumber)          
-    - task: PythonScript@0
-      displayName: Remove Previous Mesh Image
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/remove_mesh_image.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+          $(Build.BuildNumber)
     - task: PythonScript@0
       displayName: Update Mesh Image
       inputs:
         scriptSource: filePath 
         scriptPath: proxy_operations/update_mesh_image.py
-        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0,r=python,rv=3.7"
+        arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0,r=python,rv=3.7" --hostname-type Standard
     
 - job: "RunTests"
   dependsOn: ['SetupStampAndDeployTestApps',
