@@ -34,63 +34,6 @@ jobs:
         scriptPath: proxy_operations/update_mesh_image.py
         arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
 
-- job: "SetupStampAndDeployTestApps"
-  dependsOn: "CleanupStampAndSetupKuduLite"
-  pool:
-      vmImage: 'ubuntu-16.04'
-  steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-        addToPath: true
-    - script: |
-        python -m pip install requests
-      displayName: Install Python Prerequisites 
-    - task: PythonScript@0
-      displayName: Add Or Update Hosting Configuration
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/add_or_update_hosting_config.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
-    - task: PythonScript@0
-      displayName: Create User
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/create_user.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --publishing-username $(TestUsername) --publishing-password $(PublishingPassword) --name $(TestUsername)
-    - task: PythonScript@0
-      displayName: Create Subscription
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/create_subscription.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --user $(TestUsername) --name $(TestSubscription)
-    - task: PythonScript@0
-      displayName: Create WebSpace
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/create_webspace.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --name $(TestWebSpace)
-    - bash: |
-        git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git
-      displayName: Clone Required Repos
-    - task: PythonScript@0
-      displayName: Create Function Sites
-      inputs:
-        scriptSource: filePath 
-        scriptPath: proxy_operations/create_function_sites.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace) --storage-account $(AzureWebJobsStorage)
-    - task: PythonScript@0
-      displayName: Zip Function Apps For Deployment
-      inputs:
-        scriptSource: filePath 
-        scriptPath: zip_function_apps.py
-    - task: PythonScript@0
-      displayName: Zip Deploy Function Apps
-      inputs:
-        scriptSource: filePath 
-        scriptPath: zip_deploy_apps.py
-        arguments: --site-username $(TestUsername) --site-password $(PublishingPassword) --zipdeploy-address $(ZipDeployAddress)
-
 - job: "BuildAndUpdateV2Python36Image"
   dependsOn: "CleanupStampAndSetupKuduLite"
   pool:
@@ -190,23 +133,78 @@ jobs:
         scriptSource: filePath 
         scriptPath: proxy_operations/update_mesh_image.py
         arguments: --image-name maheeri/python37-test-2.0:$(Build.BuildNumber) --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0,r=python,rv=3.7" --hostname-type Standard
-    
-- job: "RunTests"
-  dependsOn: ['SetupStampAndDeployTestApps',
-              'BuildAndUpdateV2Python36Image',
-              'BuildAndUpdateV2Python37Image'
-             ]
+
+- job: "SetupStampAndDeployTestApps"
+  dependsOn: ['BuildAndUpdateV2Python36Image',
+              'BuildAndUpdateV2Python37Image']
   pool:
       vmImage: 'ubuntu-16.04'
   steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+    - script: |
+        python -m pip install requests
+      displayName: Install Python Prerequisites
     - task: PythonScript@0
-      displayName: Wait For Image Update
+      displayName: Wait For Image Updates
       inputs:
         scriptSource: inline 
         script: |
           import time
           mins = 20
-          time.sleep(60 * mins)
+          time.sleep(60 * mins) 
+    - task: PythonScript@0
+      displayName: Add Or Update Hosting Configuration
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/add_or_update_hosting_config.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
+    - task: PythonScript@0
+      displayName: Create User
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_user.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --publishing-username $(TestUsername) --publishing-password $(PublishingPassword) --name $(TestUsername)
+    - task: PythonScript@0
+      displayName: Create Subscription
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_subscription.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --user $(TestUsername) --name $(TestSubscription)
+    - task: PythonScript@0
+      displayName: Create WebSpace
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_webspace.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --name $(TestWebSpace)
+    - bash: |
+        git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git
+      displayName: Clone Required Repos
+    - task: PythonScript@0
+      displayName: Create Function Sites
+      inputs:
+        scriptSource: filePath 
+        scriptPath: proxy_operations/create_function_sites.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace) --storage-account $(AzureWebJobsStorage)
+    - task: PythonScript@0
+      displayName: Zip Function Apps For Deployment
+      inputs:
+        scriptSource: filePath 
+        scriptPath: zip_function_apps.py
+    - task: PythonScript@0
+      displayName: Zip Deploy Function Apps
+      inputs:
+        scriptSource: filePath 
+        scriptPath: zip_deploy_apps.py
+        arguments: --site-username $(TestUsername) --site-password $(PublishingPassword) --zipdeploy-address $(ZipDeployAddress)
+
+- job: "RunTests"
+  dependsOn: ['SetupStampAndDeployTestApps']
+  pool:
+      vmImage: 'ubuntu-16.04'
+  steps:
     - bash: |
         chmod +x run_tests/run_all_tests.sh
         run_tests/run_all_tests.sh
