@@ -22,6 +22,12 @@ jobs:
         python -m pip install requests
       displayName: Install Python Prerequisites
     - task: PythonScript@0
+      displayName: Remove WebSites
+      inputs:
+        scriptSource: filePath
+        scriptPath: proxy_operations/remove_function_sites.py
+        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace)
+    - task: PythonScript@0
       displayName: Remove Previous Mesh Images
       inputs:
         scriptSource: filePath

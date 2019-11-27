@@ -27,7 +27,7 @@ RUNTIMES_TEST_MATRIX = {
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Create Subscription')
+        description='Create Function Sites')
     parser.add_argument('--proxy-address', dest='proxy_address')
     parser.add_argument('--proxy-username', dest='proxy_username')
     parser.add_argument('--proxy-password', dest='proxy_password')
