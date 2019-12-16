@@ -4,6 +4,14 @@ trigger:
 - master
 - dev
 
+schedules:
+  - cron: "0 0 * * *"
+    displayName: Daily Midnight Integration Test
+    branches:
+      include:
+      - master
+    always: true
+
 variables:
   TestUsername: testuser
   TestSubscription: testsubscription
