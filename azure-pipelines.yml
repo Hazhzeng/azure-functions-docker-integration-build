@@ -132,9 +132,9 @@ jobs:
         docker build -t local/azure-functions-python:python37-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python37.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:python37-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:python37-test-2.0" azure-functions-docker/host
         docker build -t local/azure-functions-mesh:python37-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh-py37.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:python37-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
         docker tag local/azure-functions-mesh:python37-test-2.0 maheeri/python37-test-2.0:$TAGNUMBER
-        env:
-          TAGNUMBER: $(Build.BuildNumber)
-          displayName: Build Docker Image
+      env:
+        TAGNUMBER: $(Build.BuildNumber)
+        displayName: Build Docker Image
       condition: ne(variables['SkipImageUpdate'], 'true')
     - task: Docker@2
       displayName: Login to Docker Hub
