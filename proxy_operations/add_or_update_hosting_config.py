@@ -19,12 +19,29 @@ if __name__ == '__main__':
     add_or_update_address = '/'.join([args.proxy_address,
                                       ADD_OR_UPDATE_ENDPOINT])
 
-    add_or_update_data = {
-        'configurationKey': 'ServiceFabricContainersEnabled',
-        'configurationValue': 1
-    }
+    add_or_update_data = [
+        {
+            'configurationKey': 'ServiceFabricContainersEnabled',
+            'configurationValue': 1
+        },
+        {
+            'configurationKey': 'ServiceFabricContainersDefaultMaxWorkersPerSite',
+            'configurationValue': 3
+        },
+        {
+            'configurationKey': 'AddSiteRestrictedTokenEnabled',
+            'configurationValue': 1
+        },
+        {
+            'configurationKey': 'GetWorkersForHostNameStaleCacheFallbackTimeout',
+            'configurationValue': 5000
+        }
+    ]
 
-    add_or_update_response = requests.post(url=add_or_update_address,
-                                           json=add_or_update_data,
-                                           auth=(args.proxy_username,
-                                                 args.proxy_password))
+    for datum in add_or_update_data:
+        add_or_update_response = requests.post(url=add_or_update_address,
+                                               json=datum,
+                                               auth=(args.proxy_username,
+                                                     args.proxy_password))
+
+        print(add_or_update_response.text)
