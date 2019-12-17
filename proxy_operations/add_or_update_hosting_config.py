@@ -21,6 +21,10 @@ if __name__ == '__main__':
 
     add_or_update_data = [
         {
+            'configurationKey': 'ServiceFabricContainersDynamicPlaceholdersEnabled',
+            'configurationValue': 1
+        },
+        {
             'configurationKey': 'ServiceFabricContainersEnabled',
             'configurationValue': 1
         },
