@@ -1,0 +1,36 @@
+parameters:
+  proxyAntaresCmdAddress: ''
+  proxyUsername: ''
+  proxyPassword: ''
+  testSubscription: ''
+  testWebSpace: ''
+  skipImageUpdate: 'false'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+- script: |
+    python -m pip install requests
+  displayName: Install Python Prerequisites
+- task: PythonScript@0
+  displayName: Remove WebSites
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/remove_function_sites.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --subscription $(testSubscription) --webspace $(testWebSpace)
+- task: PythonScript@0
+  displayName: Remove Previous Mesh Images
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/remove_mesh_images.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword)
+  condition: ne(parameters['skipImageUpdate'], 'true')
+- task: PythonScript@0
+  displayName: Add KuduLite Image
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/update_mesh_image.py
+    arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
+  condition: ne(parameters['skipImageUpdate'], 'true')

@@ -12,35 +12,16 @@ variables:
 jobs:
 - job: "CleanupStampAndSetupKuduLite"
   pool:
-        vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'
   steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.7'
-        addToPath: true
-    - script: |
-        python -m pip install requests
-      displayName: Install Python Prerequisites
-    - task: PythonScript@0
-      displayName: Remove WebSites
-      inputs:
-        scriptSource: filePath
-        scriptPath: proxy_operations/remove_function_sites.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --subscription $(TestSubscription) --webspace $(TestWebSpace)
-    - task: PythonScript@0
-      displayName: Remove Previous Mesh Images
-      inputs:
-        scriptSource: filePath
-        scriptPath: proxy_operations/remove_mesh_images.py
-        arguments: --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword)
-      condition: ne(variables['SkipImageUpdate'], 'true')
-    - task: PythonScript@0
-      displayName: Add KuduLite Image
-      inputs:
-        scriptSource: filePath
-        scriptPath: proxy_operations/update_mesh_image.py
-        arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(ProxyAntaresCmdAddress) --proxy-username $(ProxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
-      condition: ne(variables['SkipImageUpdate'], 'true')
+  - template: pipeline_tasks/cleanup_task.yml
+    parameters:
+      proxyAntaresCmdAddress: $(ProxyAntaresCmdAddress)
+      proxyUsername: $(ProxyUsername)
+      proxyPassword: $(ProxyPassword)
+      testSubscription: $(TestSubscription)
+      testWebSpace: $(TestWebSpace)
+      skipImageUpdate: $(SkipImageUpdate)
 
 - job: "BuildAndUpdateV2Python36Image"
   dependsOn: "CleanupStampAndSetupKuduLite"
