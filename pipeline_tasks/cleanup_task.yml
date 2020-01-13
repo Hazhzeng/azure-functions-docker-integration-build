@@ -26,11 +26,11 @@ steps:
     scriptSource: filePath
     scriptPath: proxy_operations/remove_mesh_images.py
     arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword)
-  condition: ne(parameters.skipImageUpdate, 'true')
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: PythonScript@0
   displayName: Add KuduLite Image
   inputs:
     scriptSource: filePath
     scriptPath: proxy_operations/update_mesh_image.py
     arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
-  condition: ne(parameters.skipImageUpdate, 'true')
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
