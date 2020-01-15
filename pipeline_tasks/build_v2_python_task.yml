@@ -41,23 +41,23 @@ steps:
   displayName: Build Docker Image
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: Docker@2
-displayName: Login to Docker Hub
-inputs:
-  command: login
-  containerRegistry: myDockerHub
-condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+  displayName: Login to Docker Hub
+  inputs:
+    command: login
+    containerRegistry: myDockerHub
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: Docker@2
-displayName: Push to Docker Hub
-inputs:
-  command: push
-  repository: maheeri/$(artifactPythonVersion)-test-2.0
-  tags: |
-    $(Build.BuildNumber)
-condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+  displayName: Push to Docker Hub
+  inputs:
+    command: push
+    repository: maheeri/$(artifactPythonVersion)-test-2.0
+    tags: |
+      $(Build.BuildNumber)
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: PythonScript@0
-displayName: Update Mesh Image
-inputs:
-  scriptSource: filePath
-  scriptPath: proxy_operations/update_mesh_image.py
-  arguments: --image-name maheeri/$(artifactPythonVersion)-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
-condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+  displayName: Update Mesh Image
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/update_mesh_image.py
+    arguments: --image-name maheeri/$(artifactPythonVersion)-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
