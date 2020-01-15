@@ -1,0 +1,63 @@
+parameters:
+  proxyAntaresCmdAddress: ''
+  proxyUsername: ''
+  proxyPassword: ''
+  testSubscription: ''
+  testWebSpace: ''
+  dockerPublicGithubRepo: 'maiqbal11/azure-functions-docker.git'
+  dockerPrivateGithubRepo: 'maiqbal11/azure-functions-docker-private.git'
+  skipImageUpdate: 'false'
+
+steps:
+- task: InstallSSHKey@0
+  inputs:
+    knownHostsEntry: $(knownHostsEntry)
+    sshPublicKey: $(sshPublicKey)
+    sshPassphrase: $(sshPassphrase)
+    sshKeySecureFile: id_rsa
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- script: |
+    python -m pip install requests
+  displayName: Install Python Prerequisites
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- bash: |
+    git clone --single-branch --branch master git@github.com:$(dockerPublicGithubRepo)
+    git clone --single-branch --branch master git@github.com:$(dockerPrivateGithubRepo)
+  displayName: Clone Required Repos
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- bash: |
+    docker build -t local/azure-functions-base:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
+    docker build -t local/azure-functions-python-deps:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36-deps.Dockerfile azure-functions-docker/host
+    docker build -t local/azure-functions-python:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:python36-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:python36-test-2.0" azure-functions-docker/host
+    docker build -t local/azure-functions-mesh:python36-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:python36-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
+    docker tag local/azure-functions-mesh:python36-test-2.0 maheeri/python36-test-2.0:$TAGNUMBER
+  env:
+    TAGNUMBER: $(Build.BuildNumber)
+  displayName: Build Docker Image
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- task: Docker@2
+displayName: Login to Docker Hub
+inputs:
+  command: login
+  containerRegistry: myDockerHub
+condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- task: Docker@2
+displayName: Push to Docker Hub
+inputs:
+  command: push
+  repository: maheeri/python36-test-2.0
+  tags: |
+    $(Build.BuildNumber)
+condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- task: PythonScript@0
+displayName: Update Mesh Image
+inputs:
+  scriptSource: filePath
+  scriptPath: proxy_operations/update_mesh_image.py
+  arguments: --image-name maheeri/python36-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Standard
+condition: ne('${{ parameters.skipImageUpdate }}', 'true')
