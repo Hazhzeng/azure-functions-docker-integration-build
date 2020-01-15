@@ -2,9 +2,7 @@ parameters:
   proxyAntaresCmdAddress: ''
   proxyUsername: ''
   proxyPassword: ''
-  dockerPublicGithubRepo: 'maiqbal11/azure-functions-docker.git'
-  dockerPrivateGithubRepo: 'maiqbal11/azure-functions-docker-private.git'
-  imagePythonVersion: 'python36'
+  artifactPythonVersion: 'python36'
   placeholderId: 'v=1,k=f,e=~2,a=0'
   skipImageUpdate: 'false'
 
@@ -26,8 +24,8 @@ steps:
   displayName: Install Python Prerequisites
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |
-    git clone --single-branch --branch master git@github.com:$(dockerPublicGithubRepo)
-    git clone --single-branch --branch master git@github.com:$(dockerPrivateGithubRepo)
+    git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker.git
+    git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker-private.git
   displayName: Clone Required Repos
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |

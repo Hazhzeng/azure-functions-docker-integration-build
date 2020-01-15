@@ -30,7 +30,7 @@ jobs:
   steps:
   - template: pipeline_tasks/build_v2_python_task.yml
     parameters:
-      imagePythonVersion: 'python36'
+      artifactPythonVersion: 'python36'
       placeholderId: 'v=1,k=f,e=~2,a=0'
       proxyAntaresCmdAddress: $(ProxyAntaresCmdAddress)
       proxyUsername: $(ProxyUsername)
@@ -44,7 +44,7 @@ jobs:
   steps:
   - template: pipeline_tasks/build_v2_python_task.yml
     parameters:
-      imagePythonVersion: 'python37'
+      artifactPythonVersion: 'python37'
       placeholderId: 'v=1,k=f,e=~2,a=0,r=python,rv=3.7'
       proxyAntaresCmdAddress: $(ProxyAntaresCmdAddress)
       proxyUsername: $(ProxyUsername)
