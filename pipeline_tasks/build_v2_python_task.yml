@@ -36,7 +36,7 @@ steps:
     docker tag local/azure-functions-mesh:$PYTHONVERSION-test-2.0 maheeri/$PYTHONVERSION-test-2.0:$TAGNUMBER
   env:
     TAGNUMBER: $(Build.BuildNumber)
-    PYTHONVERSION: $(artifactPythonVersion)
+    PYTHONVERSION: ${{ parameters.artifactPythonVersion }}
   displayName: Build Docker Image
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: Docker@2
@@ -49,7 +49,7 @@ steps:
   displayName: Push to Docker Hub
   inputs:
     command: push
-    repository: maheeri/${{ parameters.skipImageUpdate }}-test-2.0
+    repository: maheeri/${{ parameters.artifactPythonVersion }}-test-2.0
     tags: |
       $(Build.BuildNumber)
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
@@ -58,5 +58,5 @@ steps:
   inputs:
     scriptSource: filePath
     scriptPath: proxy_operations/update_mesh_image.py
-    arguments: --image-name maheeri/${{ parameters.skipImageUpdate }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
+    arguments: --image-name maheeri/${{ parameters.artifactPythonVersion }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
