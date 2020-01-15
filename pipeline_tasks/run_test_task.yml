@@ -1,0 +1,15 @@
+parameters:
+  stampAddress: ''
+  testCasesRepository: 'https://github.com/maiqbal11/azure-functions-devops-cli-test.git'
+
+steps:
+- bash: |
+    git clone --single-branch --branch master $(testCasesRepository)
+  displayName: Clone Required Repos (azure-functions-devops-cli-test)
+- bash: |
+    chmod +x run_tests/run_all_tests.sh
+    run_tests/run_all_tests.sh
+  workingDirectory: azure-functions-devops-cli-test
+  env:
+    STAMPADDRESS: $(stampAddress)
+  displayName: Run Tests

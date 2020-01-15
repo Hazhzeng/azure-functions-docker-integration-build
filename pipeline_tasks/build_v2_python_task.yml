@@ -2,10 +2,10 @@ parameters:
   proxyAntaresCmdAddress: ''
   proxyUsername: ''
   proxyPassword: ''
-  testSubscription: ''
-  testWebSpace: ''
   dockerPublicGithubRepo: 'maiqbal11/azure-functions-docker.git'
   dockerPrivateGithubRepo: 'maiqbal11/azure-functions-docker-private.git'
+  imagePythonVersion: 'python36'
+  placeholderId: 'v=1,k=f,e=~2,a=0'
   skipImageUpdate: 'false'
 
 steps:
@@ -31,11 +31,11 @@ steps:
   displayName: Clone Required Repos
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |
-    docker build -t local/azure-functions-base:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
-    docker build -t local/azure-functions-python-deps:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36-deps.Dockerfile azure-functions-docker/host
-    docker build -t local/azure-functions-python:python36-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/python36.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:python36-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:python36-test-2.0" azure-functions-docker/host
-    docker build -t local/azure-functions-mesh:python36-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:python36-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
-    docker tag local/azure-functions-mesh:python36-test-2.0 maheeri/python36-test-2.0:$TAGNUMBER
+    docker build -t local/azure-functions-base:$(artifactPythonVersion)-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
+    docker build -t local/azure-functions-python-deps:$(artifactPythonVersion)-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/$(artifactPythonVersion)-deps.Dockerfile azure-functions-docker/host
+    docker build -t local/azure-functions-python:$(artifactPythonVersion)-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/$(artifactPythonVersion).Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:$(artifactPythonVersion)-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:$(artifactPythonVersion)-test-2.0" azure-functions-docker/host
+    docker build -t local/azure-functions-mesh:$(artifactPythonVersion)-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:$(artifactPythonVersion)-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
+    docker tag local/azure-functions-mesh:$(artifactPythonVersion)-test-2.0 maheeri/$(artifactPythonVersion)-test-2.0:$TAGNUMBER
   env:
     TAGNUMBER: $(Build.BuildNumber)
   displayName: Build Docker Image
@@ -50,7 +50,7 @@ condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 displayName: Push to Docker Hub
 inputs:
   command: push
-  repository: maheeri/python36-test-2.0
+  repository: maheeri/$(artifactPythonVersion)-test-2.0
   tags: |
     $(Build.BuildNumber)
 condition: ne('${{ parameters.skipImageUpdate }}', 'true')
@@ -59,5 +59,5 @@ displayName: Update Mesh Image
 inputs:
   scriptSource: filePath
   scriptPath: proxy_operations/update_mesh_image.py
-  arguments: --image-name maheeri/python36-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(ProxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Standard
+  arguments: --image-name maheeri/$(artifactPythonVersion)-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
 condition: ne('${{ parameters.skipImageUpdate }}', 'true')

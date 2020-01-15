@@ -1,0 +1,74 @@
+parameters:
+  proxyAntaresCmdAddress: ''
+  proxyUsername: ''
+  proxyPassword: ''
+  testUsername: ''
+  publishingPassword: ''
+  azureWebJobsStorage: ''
+  testSubscription: ''
+  testWebSpace: ''
+  waitMinutes: '20'
+  skipImageUpdate: 'false'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+- script: |
+    python -m pip install requests
+  displayName: Install Python Prerequisites
+- task: PythonScript@0
+  displayName: Wait For Image Updates
+  inputs:
+    scriptSource: inline
+    script: |
+      import time
+      mins = $(waitMinutes)
+      print(f"Sleeping for {mins} minutes...")
+      time.sleep(60 * mins)
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
+- task: PythonScript@0
+  displayName: Add Or Update Hosting Configuration
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/add_or_update_hosting_config.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword)
+- task: PythonScript@0
+  displayName: Create User
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/create_user.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --publishing-username $(testUsername) --publishing-password $(publishingPassword) --name $(testUsername)
+- task: PythonScript@0
+  displayName: Create Subscription
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/create_subscription.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --user $(testUsername) --name $(testSubscription)
+- task: PythonScript@0
+  displayName: Create WebSpace
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/create_webspace.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --subscription $(testSubscription) --name $(testWebSpace)
+- bash: |
+    git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git
+  displayName: Clone Required Repos
+- task: PythonScript@0
+  displayName: Create Function Sites
+  inputs:
+    scriptSource: filePath
+    scriptPath: proxy_operations/create_function_sites.py
+    arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --subscription $(testSubscription) --webspace $(testWebSpace) --storage-account $(azureWebJobsStorage)
+- task: PythonScript@0
+  displayName: Zip Function Apps For Deployment
+  inputs:
+    scriptSource: filePath
+    scriptPath: site_operations/zip_function_apps.py
+- task: PythonScript@0
+  displayName: Zip Deploy Function Apps
+  inputs:
+    scriptSource: filePath
+    scriptPath: site_operations/zip_deploy_apps.py
+    arguments: --site-username $(testUsername) --site-password $(publishingPassword) --zipdeploy-address $(zipDeployAddress)
