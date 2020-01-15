@@ -34,7 +34,7 @@ jobs:
       artifactImageName: 'mesh'
       placeholderId: 'v=1,k=f,e=~2,a=0'
       minContainers: '5'
-      maxContainesr: '8'
+      maxContainers: '8'
       proxyAntaresCmdAddress: $(ProxyAntaresCmdAddress)
       proxyUsername: $(ProxyUsername)
       proxyPassword: $(ProxyPassword)
@@ -50,8 +50,6 @@ jobs:
       artifactPythonVersion: 'python37'
       artifactImageName: 'mesh-py37'
       placeholderId: 'v=1,k=f,e=~2,a=0,r=python,rv=3.7'
-      minContainers: '3'
-      maxContainesr: '5'
       proxyAntaresCmdAddress: $(ProxyAntaresCmdAddress)
       proxyUsername: $(ProxyUsername)
       proxyPassword: $(ProxyPassword)

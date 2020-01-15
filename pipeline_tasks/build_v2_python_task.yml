@@ -4,8 +4,8 @@ parameters:
   proxyPassword: ''
   artifactPythonVersion: 'python36'
   artifactImageName: 'mesh'
-  minContainers: '3'
-  maxContainers: '5'
+  minContainers: '2'
+  maxContainers: '4'
   placeholderId: 'v=1,k=f,e=~2,a=0'
   skipImageUpdate: 'false'
 
@@ -27,8 +27,8 @@ steps:
   displayName: Install Python Prerequisites
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |
-    git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker.git
-    git clone --single-branch --branch master git@github.com:maiqbal11/azure-functions-docker-private.git
+    git clone --single-branch --branch master --depth 1 git@github.com:maiqbal11/azure-functions-docker.git
+    git clone --single-branch --branch master --depth 1 git@github.com:maiqbal11/azure-functions-docker-private.git
   displayName: Clone Required Repos
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |
@@ -62,5 +62,5 @@ steps:
   inputs:
     scriptSource: filePath
     scriptPath: proxy_operations/update_mesh_image.py
-    arguments: --image-name maheeri/${{ parameters.artifactPythonVersion }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --min-containers ${{ parameters.minContainers }} --max-containers ${{ parameters.maxContainers }} --hostname-type Standard
+    arguments: --image-name maheeri/${{ parameters.artifactPythonVersion }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id ${{ parameters.placeholderId }} --min-containers ${{ parameters.minContainers }} --max-containers ${{ parameters.maxContainers }} --hostname-type Standard
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')

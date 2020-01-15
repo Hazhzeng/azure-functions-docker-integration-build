@@ -19,16 +19,6 @@ steps:
     python -m pip install requests
   displayName: Install Python Prerequisites
 - task: PythonScript@0
-  displayName: Wait For Image Updates
-  inputs:
-    scriptSource: inline
-    script: |
-      import time
-      mins = ${{ parameters.waitMinutes }}
-      print(f"Sleeping for {mins} minutes...")
-      time.sleep(60 * mins)
-  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
-- task: PythonScript@0
   displayName: Add Or Update Hosting Configuration
   inputs:
     scriptSource: filePath
@@ -52,8 +42,18 @@ steps:
     scriptSource: filePath
     scriptPath: proxy_operations/create_webspace.py
     arguments: --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --subscription $(testSubscription) --name $(testWebSpace)
+- task: PythonScript@0
+  displayName: Wait For Image To Be Ready
+  inputs:
+    scriptSource: inline
+    script: |
+      import time
+      mins = ${{ parameters.waitMinutes }}
+      print(f"Sleeping for {mins} minutes...")
+      time.sleep(60 * mins)
+  condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - bash: |
-    git clone --single-branch --branch master https://github.com/maiqbal11/azure-functions-devops-cli-test.git
+    git clone --single-branch --branch master --depth 1 https://github.com/maiqbal11/azure-functions-devops-cli-test.git
   displayName: Clone Required Repos
 - task: PythonScript@0
   displayName: Create Function Sites
