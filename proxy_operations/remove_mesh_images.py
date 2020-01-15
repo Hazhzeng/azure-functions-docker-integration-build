@@ -3,6 +3,7 @@ import requests
 
 LIST_ENDPOINT = 'ListServiceFabricImages'
 REMOVE_ENDPOINT = 'RemoveServiceFabricImage'
+REMOVE_CONFIG_ENDPOINT = 'RemoveServiceFabricImageConfiguration'
 
 
 def parse_args():
@@ -23,9 +24,12 @@ if __name__ == '__main__':
     image_list = list_response.json()['value']['listOfImages']
 
     remove_address = '/'.join([args.proxy_address, REMOVE_ENDPOINT])
+    remove_config_address = '/'.join([args.proxy_address, REMOVE_CONFIG_ENDPOINT])
     for image_name in image_list:
         delete_data = {
             'image': image_name
         }
         requests.delete(url=remove_address, json=delete_data,
+                        auth=(args.proxy_username, args.proxy_password))
+        requests.delete(url=remove_config_address, json=delete_data,
                         auth=(args.proxy_username, args.proxy_password))

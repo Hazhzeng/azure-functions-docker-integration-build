@@ -2,7 +2,7 @@ import argparse
 import requests
 import time
 
-UPDATE_ENDPOINT = 'AddOrUpdateServiceFabricImageConfiguration'
+UPDATE_CONFIG_ENDPOINT = 'AddOrUpdateServiceFabricImageConfiguration'
 ADD_ENDPOINT = 'AddServiceFabricImage'
 
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         'tagSpecific': False
     }
 
-    update_address = '/'.join([args.proxy_address, UPDATE_ENDPOINT])
+    update_address = '/'.join([args.proxy_address, UPDATE_CONFIG_ENDPOINT])
     update_response = requests.post(url=update_address, json=update_data,
                                     auth=(args.proxy_username, args.proxy_password))
 
