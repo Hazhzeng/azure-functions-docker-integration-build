@@ -4,7 +4,7 @@ parameters:
 
 steps:
 - bash: |
-    git clone --single-branch --branch master $(testCasesRepository)
+    git clone --single-branch --branch master ${{ parameters.testCasesRepository }}
   displayName: Clone Required Repos (azure-functions-devops-cli-test)
 - bash: |
     chmod +x run_tests/run_all_tests.sh
