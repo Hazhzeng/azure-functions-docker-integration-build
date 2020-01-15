@@ -3,6 +3,9 @@ parameters:
   proxyUsername: ''
   proxyPassword: ''
   artifactPythonVersion: 'python36'
+  artifactImageName: 'mesh'
+  minContainers: '3'
+  maxContainers: '5'
   placeholderId: 'v=1,k=f,e=~2,a=0'
   skipImageUpdate: 'false'
 
@@ -32,11 +35,12 @@ steps:
     docker build -t local/azure-functions-base:$PYTHONVERSION-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/base.Dockerfile --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker/host
     docker build -t local/azure-functions-python-deps:$PYTHONVERSION-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/$PYTHONVERSION-deps.Dockerfile azure-functions-docker/host
     docker build -t local/azure-functions-python:$PYTHONVERSION-test-2.0 -f azure-functions-docker/host/2.0/stretch/amd64/python/$PYTHONVERSION.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-base:$PYTHONVERSION-test-2.0" --build-arg BASE_PYTHON_IMAGE="local/azure-functions-python-deps:$PYTHONVERSION-test-2.0" azure-functions-docker/host
-    docker build -t local/azure-functions-mesh:$PYTHONVERSION-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/mesh.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:$PYTHONVERSION-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
+    docker build -t local/azure-functions-mesh:$PYTHONVERSION-test-2.0 -f azure-functions-docker-private/host/2.0/stretch/amd64/$IMAGENAME.Dockerfile --build-arg BASE_IMAGE="local/azure-functions-python:$PYTHONVERSION-test-2.0" --build-arg HOST_VERSION="test-2.0.0" azure-functions-docker-private/host
     docker tag local/azure-functions-mesh:$PYTHONVERSION-test-2.0 maheeri/$PYTHONVERSION-test-2.0:$TAGNUMBER
   env:
     TAGNUMBER: $(Build.BuildNumber)
     PYTHONVERSION: ${{ parameters.artifactPythonVersion }}
+    IMAGENAME: ${{ parameters.artifactImageName }}
   displayName: Build Docker Image
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
 - task: Docker@2
@@ -58,5 +62,5 @@ steps:
   inputs:
     scriptSource: filePath
     scriptPath: proxy_operations/update_mesh_image.py
-    arguments: --image-name maheeri/${{ parameters.artifactPythonVersion }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --hostname-type Standard
+    arguments: --image-name maheeri/${{ parameters.artifactPythonVersion }}-test-2.0:$(Build.BuildNumber) --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "$(placeholderId)" --min-containers ${{ parameters.minContainers }} --max-containers ${{ parameters.maxContainers }} --hostname-type Standard
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')

@@ -32,5 +32,5 @@ steps:
   inputs:
     scriptSource: filePath
     scriptPath: proxy_operations/update_mesh_image.py
-    arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository
+    arguments: --image-name mcr.microsoft.com/azure-functions/kudulite:kudu-2.9 --proxy-address $(proxyAntaresCmdAddress) --proxy-username $(proxyUsername) --proxy-password $(proxyPassword) --placeholder-id "v=1,k=f,e=~2,a=0" --hostname-type Repository --min-containers 5 --max-containers 8
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
