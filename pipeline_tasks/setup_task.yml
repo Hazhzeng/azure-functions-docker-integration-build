@@ -24,7 +24,7 @@ steps:
     scriptSource: inline
     script: |
       import time
-      mins = $(waitMinutes)
+      mins = ${{ parameters.skipImageUpdate }}
       print(f"Sleeping for {mins} minutes...")
       time.sleep(60 * mins)
   condition: ne('${{ parameters.skipImageUpdate }}', 'true')
